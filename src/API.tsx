@@ -1,7 +1,15 @@
-async function fetchText(url: "https://jsonplaceholder.typicode.com/todos"): Promise<string> {
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error('An error occurred: ' + response.statusText);
+export const fetchData = async () => {
+    try {
+    const res = await fetch("https://jsonplaceholder.typicode.com/todos")
+    if (res.ok) {
+      const data = await res.json()
+      return data
     }
-    return await response.text();
+    else {
+      return null
+    }
+  } catch (error) {
+    return null
+  }
 }
+

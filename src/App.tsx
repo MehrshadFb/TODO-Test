@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-
 import './App.css'
-import { ClipLoader } from 'react-spinners';
+import { fetchData } from "./API"
+
 
 interface TODO {
   title: string,
@@ -15,6 +15,7 @@ function App() {
   const [task, setTask] = useState<string>('')
   const [editMode, setEditMode] = useState<boolean>(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
 
   // this function handles addding tasks to the list.
@@ -33,10 +34,16 @@ function App() {
   // this function handles renaming the title of tasks.
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, key: string) => {
     setList((prev) => {
+      // check the value of input for edited task is not empty
+      if(e.target.value === "") {
+        window.alert("set a name for your task!")
+      } 
+      else {
       // make a copy of previous state and save it in copiedList.
       const copiedList = JSON.parse(JSON.stringify(prev));
       copiedList[index][key] = e.target.value
       return copiedList
+      }
     })
   }
 
@@ -50,18 +57,22 @@ function App() {
       return copiedList
     })
   }
+
   // calling API and fetching data.
   useEffect(() => {
-    fetch('https://jsonplaceholder.typicode.com/todos')
-      .then(res => res.json())
-      .then(res => setList(res.slice(0,10)))
-      .catch(err => console.log(err))
-    // setting timeout for a 5 seconds to fetch data
-    setLoading(true)
-    setTimeout(() => {
-    setLoading(false)
-    },5000)
-  }, [])
+    const Fetch = async () => {
+      const res = await fetchData()
+      if (res != null) {
+        setList(res.slice(0,10))
+        setLoading(false)
+      }
+      else {
+        setError(true)
+        setLoading(false)
+      }
+    }
+    Fetch()
+  },[])
 
 
   
@@ -71,18 +82,21 @@ function App() {
     <h1>To-Do List</h1>
     {
       loading?
-      <ClipLoader color="red" loading={loading} size={50}/>
+        <p>Loading...</p>
       :
-      <div>
-      <input value={task} onChange={(e) => setTask(e.target.value)}></input>
-      <button onClick={handleAdd}>Add</button>
-      <button onClick={() =>setEditMode((prev) => !prev)}>Edit</button>
-      <ul>
-        {list.map((item, index) => <li key={index}>
-          {editMode ? (<input value={item.title} onChange={(e) => handleChange(e, index, 'title')}/>) : (<span>{item.title} <button onClick={()=>handleDelete(index)}>Delete</button></span>)}
-          </li>)}
-      </ul>
-    </div>
+        error?
+          <p>Something went wrong!</p>
+        :       
+        <div>
+          <input placeholder='task' value={task} onChange={(e) => setTask(e.target.value)}></input>
+          <button onClick={handleAdd}>Add</button>
+          <button onClick={() =>setEditMode((prev) => !prev)}>Edit</button>
+          <ul>
+            {list.map((item, index) => <li key={index}>
+              {editMode ? (<input placeholder='edit' value={item.title} onChange={(e) => handleChange(e, index, 'title')}/>) : (<span>{item.title} <button onClick={()=>handleDelete(index)}>Delete</button></span>)}
+              </li>)}
+          </ul>
+        </div>
     }
     
     </>
